@@ -16,6 +16,7 @@ def generate_synthetic_data(save_path):
         'expected_cases': np.random.randint(50, 500, 10),
         'reported_cases': np.random.randint(10, 400, 10)
     })
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
     data.to_csv(save_path, index=False)
     print(f"Generated synthetic test data at: {save_path}")
     return data
