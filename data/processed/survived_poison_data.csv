@@ -1,0 +1,4 @@
+admin_unit,lat,long,population,expected_cases,reported_cases
+Clinic A,0.123,34.123,5000.0,100,20.0
+Clinic C,0.333,34.789,0.0,200,40.0
+Clinic E,0.789,34.999,0.0,300,0.0
