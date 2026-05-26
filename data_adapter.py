@@ -18,7 +18,8 @@ class EpidemiologicalDataAdapter:
             'gps_longitude': 'long',
             'catchment_pop': 'population',
             'projected_malaria_cases': 'expected_cases',
-            'actual_cases_treated': 'reported_cases'
+            'actual_cases_treated': 'reported_cases',
+            'facility_tier': 'facility_tier' # ADDED for categorical methodology
         }
 
     def process_data(self, output_filename="clean_khis_data.csv"):
@@ -40,17 +41,20 @@ class EpidemiologicalDataAdapter:
             df = df.rename(columns=self.column_mapping)
 
             # 3. Filter down to ONLY the essential columns
-            essential_cols = list(self.column_mapping.values())
+            # Safely capture mapped columns that actually exist in the raw file
+            essential_cols = [col for col in self.column_mapping.values() if col in df.columns]
             
-            # Check if all essential columns actually exist after renaming
-            missing_cols = [col for col in essential_cols if col not in df.columns]
+            # Ensure the strictly required mathematical/topology columns are present
+            required_cols = ['admin_unit', 'lat', 'long', 'population', 'expected_cases', 'reported_cases']
+            missing_cols = [col for col in required_cols if col not in df.columns]
+            
             if missing_cols:
                 print(f"FATAL ERROR: The raw data is missing required mapped columns: {missing_cols}")
                 return
                 
             df = df[essential_cols]
 
-            # 4. The Toplogy Check: Drop facilities with missing GPS coordinates
+            # 4. The Topology Check: Drop facilities with missing GPS coordinates
             # A node without a location breaks the spatial graph
             df = df.dropna(subset=['lat', 'long'])
             dropped_coords = original_count - len(df)
@@ -60,9 +64,16 @@ class EpidemiologicalDataAdapter:
             # 5. Type Casting: Ensure numbers are actually numbers, not text
             numeric_cols = ['lat', 'long', 'population', 'expected_cases', 'reported_cases']
             for col in numeric_cols:
-                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-            # 6. Save the perfectly formatted data for the GNN
+            # 6. Categorical Encoding (The Fix for Non-Numeric Data)
+            # Converts text like "Level 4" into mathematical 1s and 0s for the GNN
+            if 'facility_tier' in df.columns:
+                print("Sanitation: One-hot encoding categorical facility tiers.")
+                df = pd.get_dummies(df, columns=['facility_tier'], drop_first=True)
+
+            # 7. Save the perfectly formatted data for the GNN
             output_path = os.path.join("data", "processed", output_filename)
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             df.to_csv(output_path, index=False)
