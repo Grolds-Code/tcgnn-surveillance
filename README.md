@@ -1,7 +1,7 @@
 # TCGNN-Surveillance: Topological Causal Graph Neural Networks for Detecting Structural Voids in Epidemiological Surveillance
 
-> **Mboya, G. O.** (2026). *Topological Causal Graph Neural Networks for Detecting Structural Voids in Epidemiological Surveillance.* 
-> 
+> **Mboya, G. O.** (2026). *Topological Causal Graph Neural Networks for Detecting Structural Voids in Epidemiological Surveillance.*
+
 > ORCID: [0009-0005-9102-4028](https://orcid.org/0009-0005-9102-4028) · Contact: gmotieno@jooust.ac.ke
 
 ---
@@ -60,9 +60,9 @@ Where `τ` is a tunable hyperparameter — not a rigid clinical assumption — c
 To distinguish genuine surveillance voids from algorithmic artefacts, the architecture employs Pearl's backdoor criterion. The Structural Causal Model (SCM) is defined by the following DAG:
 
 ```
-T ← Z → Y
-        ↓
-        T → Y
+Z → T
+Z → Y
+T → Y
 ```
 
 Where **T** = Resource Allocation (intervention), **Y** = Void Severity (outcome), and **Z** = {Population Density, Expected Caseloads} (confounder set). Because Z is chronologically and causally prior to T, conditioning on Z blocks the backdoor path T ← Z → Y without inducing collider bias. The backdoor adjustment for continuous confounders is:
@@ -85,7 +85,9 @@ The framework decouples data ingestion, neural computation, and causal refutatio
 
 Ingests raw field data (e.g., KHIS or KEMRI schemas). Executes a dual-sanitation pipeline:
 
-- **Continuous features:** Z-score standardization forces the input matrix into N(0,1), stabilizing the gradient descent vector ∇L and preventing weight matrix saturation from skewed epidemiological integers.
+- **Continuous features:** Z-score standardization forces the input matrix into $\mathcal{N}(0,1)$, stabilizing the gradient descent vector $\nabla L$ and preventing weight matrix saturation from skewed epidemiological integers:
+
+$$z_{i,f} = \frac{x_{i,f} - \mu_f}{\sigma_f}$$
 - **Categorical features:** Orthogonal vector embedding via one-hot encoding converts facility classification tiers into binary matrices prior to neural ingestion.
 - Filters topologically invalid nodes (facilities missing GPS coordinates).
 
@@ -101,7 +103,11 @@ $$h_v^{(k)} = \text{ReLU}\!\left( W_1 h_v^{(k-1)} + W_2 \sum_{u \in \mathcal{N}(
 
 Key design constraints:
 - **K = 2 layers** to prevent over-smoothing, preserving localized heterogeneity of void signatures.
-- Output clamped via `Clamp(Sigmoid(W_out · h_v^(K)), δ, 1−δ)` where δ = 10⁻⁵, ensuring gradient flow is preserved at probability boundaries.
+- Output clamped to preserve gradient flow at probability boundaries:
+
+$$\hat{y}_v = \text{Clamp}\!\left(\text{Sigmoid}(W_{out}\, h_v^{(K)}),\, \delta,\, 1 - \delta\right)$$
+
+  where $\delta = 10^{-5}$, ensuring predictions never reach exactly 0 or 1.
 - Optimized by minimizing **Binary Cross Entropy (BCE) loss** over the labeled node set.
 
 ### `causal_sandbox.py` — Causal Refutation Sandbox
