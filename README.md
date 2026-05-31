@@ -2,8 +2,7 @@
 
 > **Mboya, G. O.** (2026). *Topological Causal Graph Neural Networks for Detecting Structural Voids in Epidemiological Surveillance.*
 
-> ORCID: [0009-0005-9102-4028](https://orcid.org/0009-0005-9102-4028) · Contact: gmotieno@jooust.ac.ke
-
+> ORCID: [0009-0005-9102-4028](https://orcid.org/0009-0005-9102-4028)
 ---
 
 ## Abstract
